@@ -24,6 +24,12 @@ See the [technical specification](docs/TECHNICAL_SPEC.md),
 
 ## Development setup
 
+For the Ubuntu launcher installation, use the `.deb` from
+[GitHub Releases](https://github.com/eabdiel/ProgreTech-Seesaw/releases).
+See [installation and manual self-updates](docs/INSTALLATION.md).
+The desktop's **Check for updates** button checks published releases only when clicked.
+This first installer remains a foundation preview, not a printer-ready slicer.
+
 Python 3.12 is the reference interpreter. Core dependencies are locked in `uv.lock`;
 the desktop uses PySide6 and PyVista/VTK. Setup downloads dependencies; application
 operation is intended to remain offline. An air-gapped installer is a later milestone.

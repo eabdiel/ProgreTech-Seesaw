@@ -20,7 +20,9 @@ from PySide6.QtWidgets import (
 )
 from pyvistaqt import QtInteractor
 
+from seesaw import __version__
 from seesaw.model import MONO4, load_stl
+from seesaw.update_ui import UpdateButton
 
 
 class ImportWorker(QThread):
@@ -43,14 +45,18 @@ class Window(QMainWindow):
     def __init__(self):
         super().__init__()
         self.worker = None
-        self.setWindowTitle("ProgreTech Seesaw — project foundation")
+        self.setWindowTitle(f"ProgreTech Seesaw {__version__} — foundation preview")
         self.resize(1280, 800)
         root = QWidget()
         self.setCentralWidget(root)
         layout = QVBoxLayout(root)
         title = QLabel("ProgreTech Seesaw")
         title.setStyleSheet("font-size: 26px; font-weight: bold")
-        layout.addWidget(title)
+        header = QHBoxLayout()
+        header.addWidget(title, 1)
+        self.updates = UpdateButton(self)
+        header.addWidget(self.updates)
+        layout.addLayout(header)
         layout.addWidget(QLabel("Add model   →   Prepare   →   Preview   →   Export"))
         layout.addWidget(
             QLabel("Foundation preview • Import and inspect STL • Slicing coming next")
@@ -151,6 +157,11 @@ class Window(QMainWindow):
         self.status.setText(f"{fit} • Supports and raft not included • Printability not verified")
 
     def closeEvent(self, event):
+        if self.updates.busy():
+            self.updates.worker.cancel.set()
+            self.status.setText("Waiting for the update operation to finish before closing.")
+            event.ignore()
+            return
         if self.worker is not None and self.worker.isRunning():
             self.status.setText("Wait for model import to finish before closing.")
             event.ignore()
@@ -165,6 +176,8 @@ def main():
     if sys.platform == "linux" and os.environ.get("DISPLAY"):
         os.environ.setdefault("QT_QPA_PLATFORM", "xcb")
     app = QApplication(sys.argv)
+    app.setApplicationName("progretech-seesaw")
+    app.setDesktopFileName("progretech-seesaw")
     window = Window()
     window.show()
     sys.exit(app.exec())

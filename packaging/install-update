@@ -1,0 +1,74 @@
+#!/usr/bin/python3
+"""Root helper invoked by PolicyKit. Copies and verifies before calling dpkg.
+
+No shell, network, downloaded scripts or user-controlled command names are executed.
+Only a same-package, amd64, strictly newer, expected-version archive is accepted.
+"""
+
+import hashlib
+import os
+import re
+import shutil
+import stat
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+
+def field(package, name):
+    return subprocess.check_output(
+        ["/usr/bin/dpkg-deb", "--field", str(package), name], text=True
+    ).strip()
+
+
+def main():
+    if os.geteuid() != 0 or len(sys.argv) != 4:
+        raise ValueError("Run via the Seesaw updater and Ubuntu administrator authentication.")
+    source, version, digest = sys.argv[1:]
+    if not re.fullmatch(r"\d+\.\d+\.\d+", version):
+        raise ValueError("Invalid release version.")
+    if not re.fullmatch(r"[a-f0-9]{64}", digest):
+        raise ValueError("Invalid release checksum.")
+    with tempfile.TemporaryDirectory(prefix="seesaw-install-", dir="/var/tmp") as temp:
+        target = Path(temp) / "update.deb"
+        # Copy into a root-only directory to prevent replacement after verification.
+        fd = os.open(source, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+        with os.fdopen(fd, "rb") as incoming, target.open("xb") as output:
+            info = os.fstat(incoming.fileno())
+            size = info.st_size
+            if not stat.S_ISREG(info.st_mode) or not 0 < size <= 2 * 1024**3:
+                raise ValueError("Invalid installer size.")
+            if shutil.disk_usage(temp).free < size + 100 * 1024**2:
+                raise ValueError("Not enough space to stage the installer.")
+            copied = 0
+            while chunk := incoming.read(1024 * 1024):
+                copied += len(chunk)
+                if copied > size:
+                    raise ValueError("Installer changed size during verification.")
+                output.write(chunk)
+        with target.open("rb") as data:
+            actual = hashlib.file_digest(data, "sha256").hexdigest()
+        if actual != digest:
+            raise ValueError("Installer checksum mismatch.")
+        if field(target, "Package") != "progretech-seesaw":
+            raise ValueError("This installer is not ProgreTech Seesaw.")
+        if field(target, "Architecture") != "amd64" or field(target, "Version") != version:
+            raise ValueError("Installer version or architecture does not match this update.")
+        installed = subprocess.check_output(
+            ["/usr/bin/dpkg-query", "-W", "-f=${Version}", "progretech-seesaw"], text=True
+        ).strip()
+        subprocess.run(
+            ["/usr/bin/dpkg", "--compare-versions", version, "gt", installed], check=True
+        )
+        # dpkg stays offline. A dependency failure is reported; do not silently apt-upgrade the OS.
+        subprocess.run(["/usr/bin/dpkg", "--dry-run", "--install", str(target)], check=True)
+        subprocess.run(["/usr/bin/dpkg", "--install", str(target)], check=True)
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as exc:
+        print(f"Seesaw update failed: {exc}", file=sys.stderr)
+        sys.exit(1)

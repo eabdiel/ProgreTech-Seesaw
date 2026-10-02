@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=ProgreTech Seesaw
+Comment=Offline 3D model preparation — foundation preview
+Exec=progretech-seesaw
+Icon=progretech-seesaw
+Terminal=false
+Categories=Graphics;3DGraphics;Engineering;
+StartupNotify=true
+StartupWMClass=progretech-seesaw
