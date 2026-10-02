@@ -12,6 +12,13 @@ No fixed dates are assigned before backend integration measurements.
 
 ## M1 — prove Mono 4 file generation
 
+Progress in 0.1.1: actual PrusaSlicer 2.9.4 → UVTools 7.0.1 conversion and full layer/
+parameter readback passed with networking disabled, including a supported 104-layer
+fixture. A guarded research CLI is implemented. See `BACKEND_VALIDATION.md`.
+Automatic orientation/editable holes/support-point integration remains open, and no
+firmware or physical print has been qualified. Encrust profile review is recorded in
+`ENCRUST_REVIEW.md`.
+
 - Install/pin qualified PrusaSlicer and UVTools binaries with hashes and source references.
 - Probe real CLI versions/formats and create a complete Mono 4 SLA profile.
 - Slice closed/asymmetric test fixtures to SL1, convert to PM4N and reopen.

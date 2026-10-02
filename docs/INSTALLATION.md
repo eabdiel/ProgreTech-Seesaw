@@ -3,6 +3,10 @@
 The first installer release is **0.1.0, foundation preview**. It imports and displays
 STL files; it does not yet slice or export printer files.
 
+**0.1.1** retains that desktop scope and adds experimental backend validation through
+`progretech-seesaw-cli`. Use the corresponding `0.1.1` filename for the latest installer.
+The real backend integration evidence and command are in `BACKEND_VALIDATION.md`.
+
 ## Install and launch
 
 Download `progretech-seesaw_0.1.0_amd64.deb` from the project's

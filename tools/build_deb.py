@@ -7,6 +7,7 @@ Build on Ubuntu amd64 with Python 3.12 from python-build-standalone (uv-managed)
 import argparse
 import json
 import os
+import platform
 import shutil
 import subprocess
 import sys
@@ -33,6 +34,8 @@ def main():
     repo = Path(__file__).resolve().parents[1]
     os.chdir(repo)
     version = tomllib.loads((repo / "pyproject.toml").read_text())["project"]["version"]
+    if sys.platform != "linux" or platform.machine() != "x86_64":
+        raise SystemExit("This package builder targets Linux amd64 only.")
     if sys.version_info[:2] != (3, 12):
         raise SystemExit("Build with the project's uv-managed Python 3.12 interpreter.")
     args.work = args.work.resolve()
@@ -87,6 +90,17 @@ def main():
         '/opt/progretech-seesaw/launch.py "$@"\n',
         0o755,
     )
+    write(
+        runtime / "cli.py",
+        'import sys\nsys.path.insert(0, "/opt/progretech-seesaw/site")\n'
+        "from seesaw.cli import main\nmain()\n",
+    )
+    write(
+        stage / "usr/bin/progretech-seesaw-cli",
+        "#!/bin/sh\nexec /opt/progretech-seesaw/python/bin/python3.12 -I "
+        '/opt/progretech-seesaw/cli.py "$@"\n',
+        0o755,
+    )
     helper = stage / "usr/lib/progretech-seesaw/install-update"
     helper.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(repo / "packaging/install-update", helper)
@@ -139,7 +153,7 @@ Depends: {deps}
 Homepage: https://github.com/eabdiel/ProgreTech-Seesaw
 Description: Offline 3D model workflow for Ubuntu (foundation preview)
  Python desktop with STL viewing and explicit GitHub release updates.
- Slicing and printer export are not yet available in this foundation release.
+ Desktop printer export is disabled. Backend CLI validation is experimental.
 """,
     )
     # No maintainer scripts and no network operations during installation.

@@ -8,6 +8,11 @@ display STL geometry and report dimensions, watertightness and unrotated fit. It
 yet prepare supports, slice or export printer files. Nothing in this release should
 be treated as a validated Mono 4 print job.
 
+Release **0.1.1** adds an experimental CLI backend-validation path. Actual PrusaSlicer
+2.9.4 and UVTools 7.0.1 produced and verified Mono 4 research candidates offline,
+including a supported 104-layer fixture. This is separate from the read-only desktop;
+see [backend validation and its limits](docs/BACKEND_VALIDATION.md).
+
 The intended production pipeline is:
 
 ```text

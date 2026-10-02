@@ -62,6 +62,7 @@ def test_plan_preserves_paths_and_does_not_execute(tmp_path):
 
 def test_discovery_does_not_claim_qualification(monkeypatch):
     monkeypatch.setenv("PATH", "")
+    monkeypatch.setattr("seesaw.backends.find_uvtools", lambda: None)
     result = discover()
     assert result["prusa_slicer"] is None
     assert result["uvtools"] is None

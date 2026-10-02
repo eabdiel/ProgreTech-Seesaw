@@ -4,12 +4,12 @@ build-backend = "hatchling.build"
 
 [project]
 name = "progretech-seesaw"
-version = "0.1.0"
+version = "0.1.1"
 description = "Offline-first Ubuntu slicing workflow — project foundation"
 readme = "README.md"
 requires-python = ">=3.12,<3.15"
 license = "AGPL-3.0-only"
-dependencies = ["trimesh>=4.9,<5", "numpy>=2.2,<3"]
+dependencies = ["trimesh>=4.9,<5", "numpy>=2.2,<3", "Pillow>=12,<13"]
 
 [project.optional-dependencies]
 desktop = ["PySide6-Essentials>=6.8,<7", "pyvista>=0.46,<0.48", "pyvistaqt>=0.11,<0.12"]
