@@ -1,5 +1,11 @@
 # ProgreTech Seesaw — offline 3D printing software for Ubuntu
 
+Offline 3D printing software for Ubuntu/Linux: Python workspace with PrusaSlicer and UVTools, resin/FDM profiles, and experimental image-to-3D.
+
+A project of **[ProgreTech LLC](https://progretech.com)**, owned and maintained by **Ed Rodriguez**. Third-party components and contributions retain their respective ownership and notices.
+
+[Project website](https://progretech.com) · [Report an issue](https://github.com/eabdiel/ProgreTech-Seesaw/issues) · [Contribute](CONTRIBUTING.md)
+
 Built by **[ProgreTech](https://progretech.com)** · [Download releases](https://github.com/eabdiel/ProgreTech-Seesaw/releases) · [Technical specification](docs/TECHNICAL_SPEC.md)
 
 A Python-driven, offline slicing workspace for Ubuntu. **Version 0.4.0** supports
@@ -101,3 +107,19 @@ See [third-party notices](docs/THIRD_PARTY.md) before distributing backend binar
 The UI direction follows the owner's supplied classroom-slicer reference: clear
 steps, a large model view, model tools at left, printer/material setup at right and
 plain-language status below. Resin terminology replaces the reference's filament controls.
+
+## Collaboration
+
+Reproducible bug reports, platform compatibility, installation documentation, and small regression fixes are useful ways to help. Read [CONTRIBUTING.md](CONTRIBUTING.md) for issue reports, proposed changes, and attribution requirements.
+
+## License and reuse
+
+The repository includes AGPL-3.0 terms in [LICENSE](LICENSE). Preserve applicable copyright and license notices. Consult the full license for modification, distribution, and any source-provision requirements.
+
+Preserve the upstream and test-model notices described in the existing “License and upstream work” section. The bundled model and printer profiles have separate terms; application licensing does not replace them.
+
+## More from ProgreTech
+
+Explore [CodeSeal](https://codeseal.progretech.com) for signed software provenance and project history.
+
+Discover the wider portfolio at [progretech.com](https://progretech.com). These links identify related products; they do not imply a bundled integration or shared license.
