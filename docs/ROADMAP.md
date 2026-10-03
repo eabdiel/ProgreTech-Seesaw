@@ -71,6 +71,11 @@ Exit: repeatable print evidence supports the Mono 4 compatibility label.
 
 ## M5 — local AI orchestration
 
+0.4.0 implements an experimental CPU relief path, pinned optional local TRELLIS.cpp
+Q4 reconstruction with preview/repair, and private OpenClaw prompt intake.
+See `EXPERIMENTAL_GENERATION.md`. Remote artifact transfer, broad model qualification
+and automated prompt-to-revised-image orchestration remain open.
+
 - Optional image/text-to-3D provider adapters and user-managed weights.
 - Per-model CUDA/driver/VRAM/RAM/disk checks with clear minimum/recommended labels.
 - Local progress, cancellation, OOM recovery and generated-mesh inspection.

@@ -89,6 +89,9 @@ class Window(WorkspaceControls, QMainWindow):
         self.job_directory = None
         self.setWindowTitle(f"ProgreTech Seesaw {__version__} — Mono 4 workspace")
         self.resize(1280, 800)
+        experimental = self.menuBar().addMenu("Experimental")
+        generation = experimental.addAction("Image to 3D / OpenClaw + Tailscale…")
+        generation.triggered.connect(self.open_generation)
         root = QWidget()
         self.setCentralWidget(root)
         layout = QVBoxLayout(root)
@@ -248,6 +251,10 @@ class Window(WorkspaceControls, QMainWindow):
             QPushButton:disabled { background: #dfe4e5; color: #526373; }
             QLabel { padding: 6px; }
         """)
+
+    def open_generation(self):
+        from seesaw.generation_ui import open_generation
+        open_generation(self)
 
     def open_model(self):
         name, _ = QFileDialog.getOpenFileName(self, "Add model", "", "STL models (*.stl *.STL)")

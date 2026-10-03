@@ -58,6 +58,8 @@ def main():
         "--locked",
         "--extra",
         "desktop",
+        "--extra",
+        "generation",
         "--no-dev",
         "--no-emit-project",
         "--output-file",
@@ -88,6 +90,17 @@ def main():
         stage / "usr/bin/progretech-seesaw",
         "#!/bin/sh\nexec /opt/progretech-seesaw/python/bin/python3.12 -I "
         '/opt/progretech-seesaw/launch.py "$@"\n',
+        0o755,
+    )
+    write(
+        runtime / "generate.py",
+        'import sys\nsys.path.insert(0, "/opt/progretech-seesaw/site")\n'
+        "from seesaw.generation_cli import main\nmain()\n",
+    )
+    write(
+        stage / "usr/bin/progretech-seesaw-generate",
+        "#!/bin/sh\nexec /opt/progretech-seesaw/python/bin/python3.12 -I "
+        '/opt/progretech-seesaw/generate.py "$@"\n',
         0o755,
     )
     write(

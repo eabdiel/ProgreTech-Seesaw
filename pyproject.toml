@@ -4,19 +4,32 @@ build-backend = "hatchling.build"
 
 [project]
 name = "progretech-seesaw"
-version = "0.3.1"
+version = "0.4.0"
 description = "Offline Ubuntu resin slicing and calibration workflow"
 readme = "README.md"
 requires-python = ">=3.12,<3.15"
 license = "AGPL-3.0-only"
-dependencies = ["trimesh>=4.9,<5", "numpy>=2.2,<3", "Pillow>=12,<13"]
+dependencies = [
+    "trimesh>=4.9,<5",
+    "numpy>=2.2,<3",
+    "Pillow>=12,<13",
+]
+
+[project.urls]
+Homepage = "https://progretech.com"
+Repository = "https://github.com/eabdiel/ProgreTech-Seesaw"
+Issues = "https://github.com/eabdiel/ProgreTech-Seesaw/issues"
 
 [project.optional-dependencies]
 desktop = ["PySide6-Essentials>=6.8,<7", "pyvista>=0.46,<0.48", "pyvistaqt>=0.11,<0.12"]
 dev = ["pytest>=8,<10", "ruff>=0.12,<1"]
+generation = [
+    "pymeshfix>=0.17,<0.18",
+]
 
 [project.scripts]
 seesaw = "seesaw.cli:main"
+seesaw-generate = "seesaw.generation_cli:main"
 seesaw-desktop = "seesaw.app:main"
 
 [tool.hatch.build.targets.wheel]

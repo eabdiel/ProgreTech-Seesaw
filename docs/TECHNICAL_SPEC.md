@@ -1,5 +1,7 @@
 # ProgreTech Seesaw — technical specification
 
+Optional generation: see [experimental image-to-3D integration](EXPERIMENTAL_GENERATION.md).
+
 Current implementation: see [0.3 workspace capabilities and limits](WORKSPACE_0_3.md).
 The original requirements/history below are not a claim that every planned feature is complete.
 

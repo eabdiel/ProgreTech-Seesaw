@@ -1,0 +1,47 @@
+{
+  "provider": "trellis.cpp",
+  "version": "v0.8.1",
+  "runtime": {
+    "url": "https://github.com/pwilkin/trellis.cpp/releases/download/v0.8.1/trellis-cuda-linux-x64.tar.gz",
+    "sha256": "5257d222a7a4becb9a125aa80b24328f91da22987777d86b312bad4ab237edae"
+  },
+  "weights": [
+    {
+      "name": "birefnet.gguf",
+      "sha256": "10c5dd4dcac904cf81c9a16180eb66f167dd52ab55867f54a44567b0b2babbc1",
+      "bytes": 882749024,
+      "url": "https://huggingface.co/ilintar/trellis2-gguf/resolve/a57397bd3d351599d9729fc144b3f87c3f87d65b/q4/birefnet.gguf"
+    },
+    {
+      "name": "dinov3.gguf",
+      "sha256": "6473cf96fd275bf84f5cc0556975a2abaa10b641e4a07101dcad561df1917ef2",
+      "bytes": 172662976,
+      "url": "https://huggingface.co/ilintar/trellis2-gguf/resolve/a57397bd3d351599d9729fc144b3f87c3f87d65b/q4/dinov3.gguf"
+    },
+    {
+      "name": "shape_dec.gguf",
+      "sha256": "79a52ddfed3454f724683940c11cfbfcf76c427ab3b7fdeb4c3cfc6d26647de4",
+      "bytes": 845423552,
+      "url": "https://huggingface.co/ilintar/trellis2-gguf/resolve/a57397bd3d351599d9729fc144b3f87c3f87d65b/q4/shape_dec.gguf"
+    },
+    {
+      "name": "shape_flow_512.gguf",
+      "sha256": "de7b87a92280035258c94314258e3b8314de39e5f001eac1ada0b4087785fb63",
+      "bytes": 730520576,
+      "url": "https://huggingface.co/ilintar/trellis2-gguf/resolve/a57397bd3d351599d9729fc144b3f87c3f87d65b/q4/shape_flow_512.gguf"
+    },
+    {
+      "name": "ss_dec.gguf",
+      "sha256": "2790b5eecb261cc877d9bf175ce2bd6dd48cd65be8c042c5f5bc023dfca01cf7",
+      "bytes": 147379392,
+      "url": "https://huggingface.co/ilintar/trellis2-gguf/resolve/a57397bd3d351599d9729fc144b3f87c3f87d65b/q4/ss_dec.gguf"
+    },
+    {
+      "name": "ss_flow.gguf",
+      "sha256": "a43c6393ee4a763a03e382de750d4f62752bacf969940442fd856230e62b88c2",
+      "bytes": 730496672,
+      "url": "https://huggingface.co/ilintar/trellis2-gguf/resolve/a57397bd3d351599d9729fc144b3f87c3f87d65b/q4/ss_flow.gguf"
+    }
+  ],
+  "qualification": "Experimental: one RTX 5060 Ti image, 512 geometry, 12 steps, Q4, native remesh plus explicit MeshFix repair. No physical print qualification."
+}
