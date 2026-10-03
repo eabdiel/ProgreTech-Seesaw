@@ -1,5 +1,8 @@
 # ProgreTech Seesaw — technical specification
 
+Current implementation: see [0.3 workspace capabilities and limits](WORKSPACE_0_3.md).
+The original requirements/history below are not a claim that every planned feature is complete.
+
 Version 0.1 • 2026-10-02 • Owner: Edwin / ProgreTech • Prepared by Codex
 
 This is the initial engineering specification. “Must” describes release requirements,

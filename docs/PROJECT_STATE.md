@@ -1,8 +1,10 @@
 # Project persistence and job currency
 
 The Python core now stores a single local STL reference, SHA-256, immutable transform,
-explicit optional resin settings, Mono 4 profile identity and revision in versioned JSON.
-The 0.2.0 desktop uses this API for open/save, transforms and job currency.
+explicit resin or filament settings, printer identity/revision and an immutable material
+profile snapshot in version-2 JSON. Up to 31 additional independently transformed
+copies share the source hash. Version-1 projects migrate on reading; reopening never
+restores export readiness. The 0.3.0 desktop uses this API throughout.
 
 `Project.from_stl_path(path, settings=...)` records source identity; geometry inspection
 still belongs to `model.load_stl`. `save_project` writes a unique temporary file, flushes
@@ -15,10 +17,10 @@ are accepted. Project files include absolute local source paths and should be tr
 as local documents when sharing.
 
 Transforms describe translation in millimetres, rotation in degrees, and uniform scale.
-The geometry module applies the transform to an independent mesh copy. Desktop slicing
-currently permits rotation and uniform scale only, with automatic XY centering. Translated
-projects can be reopened but slicing rejects them until placement is qualified. A saved
-setting is not a calibrated resin preset.
+The geometry module applies the transform to an independent mesh copy. Desktop slicing permits XY movement, rotation and uniform scale independently for
+each copy. XY zero is the bed center; rotated geometry is grounded on Z=0. Explicit
+Z translation is rejected. Native center coordinates preserve world placement.
+A saved setting is not a calibrated material preset.
 
 `project.edited(...)` creates a new revision. `JobGate.begin(project)` produces a unique
 input snapshot; `finish(project, snapshot)` rejects stale or superseded completion.

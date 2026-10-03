@@ -151,10 +151,10 @@ Maintainer: ProgreTech Seesaw <eabdiel@users.noreply.github.com>
 Installed-Size: {size}
 Depends: {deps}
 Homepage: https://github.com/eabdiel/ProgreTech-Seesaw
-Description: Offline resin slicing workflow for Ubuntu
+Description: Offline resin and filament slicing workspace for Ubuntu
  Python desktop with preparation, layer preview and explicit GitHub release updates.
  Mono 4 calibration export requires PrusaSlicer 2.9.4 and UVTools 7.0.1.
- Firmware and resin settings remain physically unqualified.
+ Printer firmware and material settings remain physically unqualified.
 """,
     )
     # No maintainer scripts and no network operations during installation.

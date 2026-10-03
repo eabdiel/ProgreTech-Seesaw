@@ -6,11 +6,19 @@ import tempfile
 from pathlib import Path
 
 
-def export_candidate(source, destination, expected_hash, cancel=None, verify_inputs=lambda: None):
+def export_candidate(
+    source,
+    destination,
+    expected_hash,
+    cancel=None,
+    verify_inputs=lambda: None,
+    *,
+    extension=".pm4n",
+):
     """Copy and verify before atomic publication; never overwrite a source STL."""
     source, destination = Path(source), Path(destination).expanduser().resolve()
-    if destination.suffix.lower() != ".pm4n":
-        raise ValueError("Choose a .pm4n destination.")
+    if extension not in {".pm4n", ".gcode"} or destination.suffix.lower() != extension:
+        raise ValueError(f"Choose a {extension} destination for the selected printer.")
     if source.resolve() == destination:
         raise ValueError("Choose a destination outside the working candidate.")
     fd, temporary = tempfile.mkstemp(prefix=".seesaw-export-", dir=destination.parent)

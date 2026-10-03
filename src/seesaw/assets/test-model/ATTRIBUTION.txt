@@ -1,0 +1,6 @@
+Test your 3D printer! by ctrlV
+Source: https://www.thingiverse.com/thing:704409
+Creator: https://www.thingiverse.com/ctrlV/designs
+The original STL is bundled without modification. Original LICENSE.txt and README.txt are included.
+The supplied archive declares Creative Commons Attribution - No Derivatives; it does not specify a license version. This model is separately licensed from Seesaw code.
+This demanding geometry test was designed around filament-printer features; it is not an exposure calibration or a guarantee of resin printability.

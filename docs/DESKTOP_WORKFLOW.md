@@ -1,5 +1,8 @@
 # Desktop calibration workflow — 0.2.0
 
+Current implementation: see [0.3 workspace capabilities and limits](WORKSPACE_0_3.md).
+The original requirements/history below are not a claim that every planned feature is complete.
+
 The Mono 4 desktop now connects the existing software-validated backend to project
 persistence, preparation, preview and export. It produces **calibration candidates**;
 firmware acceptance and physical printing remain unqualified.

@@ -6,8 +6,6 @@ import uuid
 from pathlib import Path
 from zipfile import BadZipFile
 
-import numpy as np
-import pyvista as pv
 from PySide6.QtCore import Qt, QThread, QUrl, Signal
 from PySide6.QtGui import QDesktopServices, QPixmap
 from PySide6.QtWidgets import (
@@ -32,13 +30,15 @@ from pyvistaqt import QtInteractor
 
 from seesaw import __version__
 from seesaw.desktop_jobs import ExportWorker, PreviewWorker, SliceWorker
+from seesaw.fdm import GCodePreview
 from seesaw.geometry import prepare_mesh
-from seesaw.model import MONO4, load_stl
+from seesaw.model import load_stl
 from seesaw.pipeline import Settings
 from seesaw.preview import LayerPreview
-from seesaw.project import JobGate, Project, Transform, load_project, save_project
-from seesaw.settings_ui import edit_settings
+from seesaw.profiles import printer_by_id
+from seesaw.project import JobGate, Project, load_project, save_project
 from seesaw.update_ui import UpdateButton
+from seesaw.workspace_ui import WorkspaceControls
 
 
 class ImportWorker(QThread):
@@ -65,7 +65,7 @@ class ImportWorker(QThread):
             self.failed.emit(str(exc))
 
 
-class Window(QMainWindow):
+class Window(WorkspaceControls, QMainWindow):
     def __init__(self):
         super().__init__()
         self.import_active = False
@@ -95,6 +95,8 @@ class Window(QMainWindow):
         header = QHBoxLayout()
         header.addWidget(title, 1)
         self.updates = UpdateButton(self)
+        help_button = QPushButton("Help")
+        help_button.clicked.connect(self.show_help)
         self.open_project_button = QPushButton("Open project")
         self.open_project_button.clicked.connect(self.open_project)
         self.save_project_button = QPushButton("Save project")
@@ -102,19 +104,25 @@ class Window(QMainWindow):
         self.save_project_button.setEnabled(False)
         header.addWidget(self.open_project_button)
         header.addWidget(self.save_project_button)
+        header.addWidget(help_button)
         header.addWidget(self.updates)
         layout.addLayout(header)
         layout.addWidget(QLabel("Add model   →   Prepare   →   Preview   →   Export"))
         layout.addWidget(
             QLabel(
-                "Offline resin workspace • Mono 4 calibration candidates "
+                "Offline workspace • Printer-specific calibration candidates "
                 "• Hardware qualification pending"
             )
         )
         row = QHBoxLayout()
         layout.addLayout(row, 1)
-        left = QVBoxLayout()
-        row.addLayout(left, 1)
+        left_panel = QWidget()
+        left = QVBoxLayout(left_panel)
+        left_scroll = QScrollArea()
+        left_scroll.setWidgetResizable(True)
+        left_scroll.setMinimumWidth(250)
+        left_scroll.setWidget(left_panel)
+        row.addWidget(left_scroll, 1)
         left.addWidget(QLabel("Your model"))
         self.add = QPushButton("＋ Add STL model")
         self.add.clicked.connect(self.open_model)
@@ -149,6 +157,15 @@ class Window(QMainWindow):
         viewport_layout = QVBoxLayout(frame)
         self.viewport = QtInteractor(frame)
         viewport_layout.addWidget(self.viewport.interactor)
+        self.edge_toggle = QCheckBox("Show mesh edges")
+        self.edge_toggle.setToolTip("Reveal triangulation without changing printable geometry.")
+        self.edge_toggle.toggled.connect(self.toggle_edges)
+        view_tools = QHBoxLayout()
+        view_tools.addWidget(self.edge_toggle)
+        focus_model = QPushButton("Focus model")
+        focus_model.clicked.connect(self.focus_model)
+        view_tools.addWidget(focus_model)
+        viewport_layout.addLayout(view_tools)
         self.tabs = QTabWidget()
         self.tabs.addTab(frame, "Model")
         preview_page = QWidget()
@@ -173,19 +190,6 @@ class Window(QMainWindow):
         right_scroll.setMinimumWidth(290)
         right_scroll.setWidget(right_panel)
         row.addWidget(right_scroll, 1)
-        for text in (
-            "Print setup",
-            MONO4.name,
-            "Resin / MSLA • 10K",
-            "153.408 × 87.040 × 165 mm",
-            "9024 × 5120 pixels",
-            "Printer profile: awaiting qualification",
-            "Material target: Anycubic clear water-washable resin",
-            "Rotate view: drag\nZoom: scroll",
-        ):
-            label = QLabel(text)
-            label.setWordWrap(True)
-            right.addWidget(label)
         reset = QPushButton("Reset view")
         reset.clicked.connect(self.viewport.reset_camera)
         right.addWidget(reset)
@@ -230,6 +234,7 @@ class Window(QMainWindow):
         self.export.clicked.connect(self.export_print)
         actions.addWidget(self.export)
         layout.addLayout(actions)
+        self.build_workspace_controls(left, right, settings_form)
         self.setStyleSheet("""
             QWidget { background: #fafaf8; color: #102243; font-size: 15px; }
             QPushButton { background: #008d98; color: white; padding: 12px;
@@ -268,6 +273,7 @@ class Window(QMainWindow):
     def save_current_project(self):
         if self.project is None:
             return
+        self.transform_model()
         name, _ = QFileDialog.getSaveFileName(
             self,
             "Save project",
@@ -295,47 +301,13 @@ class Window(QMainWindow):
     def import_failed(self, message):
         self.status.setText(f"Could not import model: {message}")
 
-    def show_model(self, mesh, info):
-        self.project = self.worker.project
-        self.project_path = self.worker.path if self.worker.project_file else None
-        self.mesh, self.inspection = mesh, info
-        self.undo_stack.clear()
-        self.sync_controls()
-        self.render_model()
-
-    def render_model(self):
-        mesh, info = self.mesh, self.inspection
-        # Display a copy centered above the bed. No source geometry is modified.
-        prepared = prepare_mesh(mesh, self.project.transform)
-        vertices = prepared.vertices.copy()
-        vertices[:, :2] -= prepared.bounds.mean(axis=0)[:2]
-        faces = np.column_stack((np.full(len(mesh.faces), 3), mesh.faces)).ravel()
-        self.viewport.clear()
-        self.viewport.add_mesh(pv.PolyData(vertices, faces), color="#00959d")
-        self.viewport.add_mesh(
-            pv.Plane(center=(0, 0, -0.1), i_size=MONO4.build_mm[0], j_size=MONO4.build_mm[1]),
-            color="#99a6ad",
-            style="wireframe",
-        )
-        self.viewport.view_isometric()
-        self.viewport.reset_camera()
-        dimensions = " × ".join(f"{x:.2f}" for x in prepared.extents)
-        self.info.setText(
-            f"{info.name}\n\n{dimensions} mm\n{info.triangles:,} triangles\n"
-            f"Watertight: {'yes' if info.watertight else 'no'}"
-        )
-        fit = (
-            "Fits unrotated"
-            if all(a <= b for a, b in zip(prepared.extents, MONO4.build_mm))
-            else "Exceeds build volume in this orientation"
-        )
-        self.status.setText(f"{fit} • Supports and raft not included • Printability not verified")
-
     def busy(self):
         # A native thread may exit before its queued completion handlers run.
         return self.import_active or self.slice_active or self.export_active or self.updates.busy()
 
     def invalidate_result(self):
+        if getattr(self, "syncing", False):
+            return
         self.gate.invalidate()
         self.candidate = None
         self.layer_preview = None
@@ -344,95 +316,6 @@ class Window(QMainWindow):
         self.layer_image.clear()
         self.layer_info.setText("Slice to inspect decoded PM4N layers.")
         self.export.setEnabled(False)
-
-    def sync_controls(self):
-        for spin, value in zip(self.rotation, self.project.transform.rotation_deg):
-            spin.setRange(min(-360, value), max(360, value))
-            spin.setValue(value)
-        self.scale.setRange(
-            min(0.01, self.project.transform.scale), max(100, self.project.transform.scale)
-        )
-        self.scale.setValue(self.project.transform.scale)
-        settings = self.project.settings
-        self.settings_template = settings or Settings(1, 1)
-        for spin, value in (
-            (self.exposure, settings.exposure_s if settings else 0),
-            (self.bottom_exposure, settings.bottom_exposure_s if settings else 0),
-        ):
-            spin.blockSignals(True)
-            spin.setValue(value)
-            spin.blockSignals(False)
-        self.supports.blockSignals(True)
-        self.supports.setChecked(settings.supports if settings else False)
-        self.supports.blockSignals(False)
-        self.update_settings_summary()
-
-    def settings_changed(self):
-        if self.project is None:
-            return
-        from dataclasses import replace
-
-        settings = None
-        if self.exposure.value() >= 0.1 and self.bottom_exposure.value() >= 0.1:
-            settings = replace(
-                self.project.settings or self.settings_template,
-                exposure_s=self.exposure.value(),
-                bottom_exposure_s=self.bottom_exposure.value(),
-                supports=self.supports.isChecked(),
-            )
-        if settings is not None:
-            self.settings_template = settings
-        self.project = self.project.edited(settings=settings)
-        self.update_settings_summary()
-        self.invalidate_result()
-
-    def update_settings_summary(self):
-        settings = self.project.settings if self.project else None
-        self.settings_summary.setText(
-            f"{settings.layer_mm:g} mm layers • {settings.bottom_layers} bottom layers\n"
-            f"Lift {settings.lift_mm:g} mm at {settings.lift_mm_min:g} mm/min\n"
-            f"Retract {settings.retract_mm_min:g} mm/min • Rest {settings.rest_s:g} s\n"
-            f"Antialiasing: {'on' if settings.antialias else 'off'} • Calibration pending"
-            if settings
-            else "Set normal and bottom exposure values to enable slicing."
-        )
-
-    def edit_advanced(self):
-        if self.project is None or self.project.settings is None or self.busy():
-            self.status.setText("Import a model and enter both exposure values first.")
-            return
-        settings = edit_settings(self, self.project.settings)
-        if settings is not None:
-            self.project = self.project.edited(settings=settings)
-            self.invalidate_result()
-            self.update_settings_summary()
-
-    def transform_model(self):
-        if self.project is None or self.busy():
-            return
-        previous = self.project
-        try:
-            transform = Transform(
-                previous.transform.translation_mm,
-                tuple(spin.value() for spin in self.rotation),
-                self.scale.value(),
-            )
-            prepare_mesh(self.mesh, transform)
-            self.undo_stack.append(previous)
-            self.project = previous.edited(transform=transform)
-            self.invalidate_result()
-            self.render_model()
-        except ValueError as exc:
-            self.status.setText(str(exc))
-
-    def undo_transform(self):
-        if not self.undo_stack or self.busy():
-            return
-        previous = self.undo_stack.pop()
-        self.project = self.project.edited(transform=previous.transform)
-        self.invalidate_result()
-        self.sync_controls()
-        self.render_model()
 
     def job_controls(self, enabled):
         for control in (
@@ -449,6 +332,17 @@ class Window(QMainWindow):
             self.bottom_exposure,
             self.supports,
             self.slice,
+            self.printer_box,
+            self.material_box,
+            self.save_material_button,
+            self.import_material_button,
+            self.test_button,
+            self.instance_box,
+            self.duplicate_button,
+            self.remove_button,
+            self.arrange_button,
+            *self.position,
+            *self.filament_controls.values(),
         ):
             control.setEnabled(enabled)
         self.cancel.setEnabled(not enabled)
@@ -528,7 +422,13 @@ class Window(QMainWindow):
             return
         self.candidate = (directory, manifest)
         try:
-            self.layer_preview = LayerPreview(directory / "readback.sl1", manifest["layer_count"])
+            self.layer_preview = (
+                LayerPreview(directory / "readback.sl1", manifest["layer_count"])
+                if self.project.printer_id == "mono4"
+                else GCodePreview.from_validated_layers(
+                    directory / "candidate.gcode", manifest["layer_z_mm"]
+                )
+            )
             self.layer_slider.blockSignals(True)
             self.layer_slider.setRange(0, manifest["layer_count"] - 1)
             self.layer_slider.setValue(0)
@@ -578,14 +478,19 @@ class Window(QMainWindow):
             return
         self.layer_image.setPixmap(picture.scaled(600, 400, Qt.AspectRatioMode.KeepAspectRatio))
         settings = self.project.settings
-        exposure = (
-            settings.bottom_exposure_s if index < settings.bottom_layers else settings.exposure_s
-        )
-        self.layer_info.setText(
-            f"Layer {index + 1}/{len(self.layer_preview.names)} • "
-            f"Z {(index + 1) * settings.layer_mm:.3f} mm • {exposure:g} s\n"
-            "Decoded printer pixels, reduced for display; horizontal mirror retained."
-        )
+        if self.project.printer_id == "mono4":
+            exposure = (
+                settings.bottom_exposure_s
+                if index < settings.bottom_layers
+                else settings.exposure_s
+            )
+            text = (
+                f"Z {(index + 1) * settings.layer_mm:.3f} mm • {exposure:g} s"
+                " • Decoded printer pixels"
+            )
+        else:
+            text = f"Z {self.layer_preview.z_values[index]:.3f} mm • Actual extruded G-code paths"
+        self.layer_info.setText(f"Layer {index + 1}/{len(self.layer_preview.names)} • {text}")
         self.export.setEnabled(not self.export_active)
 
     def export_print(self):
@@ -598,7 +503,7 @@ class Window(QMainWindow):
             QMessageBox.warning(
                 self,
                 "Calibration candidate",
-                "File validation passed. Printer firmware and resin settings have not been "
+                "File validation passed. Printer firmware and material settings have not been "
                 "physically qualified. Export for a supervised calibration test?",
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                 QMessageBox.StandardButton.No,
@@ -606,15 +511,16 @@ class Window(QMainWindow):
             != QMessageBox.StandardButton.Yes
         ):
             return
+        extension = printer_by_id(self.project.printer_id).extension
         name, _ = QFileDialog.getSaveFileName(
-            self, "Export Mono 4 candidate", "calibration.pm4n", "Mono 4 files (*.pm4n)"
+            self, "Export printer file", "calibration" + extension, f"Printer files (*{extension})"
         )
         if name:
             try:
                 directory, manifest = self.candidate
                 self.export_worker = ExportWorker(
                     self.project,
-                    directory / "candidate.pm4n",
+                    directory / ("candidate" + extension),
                     name,
                     manifest["output_sha256"],
                     self,

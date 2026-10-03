@@ -193,7 +193,9 @@ def expect(values: dict, key: str, expected):
         raise PipelineError(f"Decoded {key} is {actual!r}; expected {expected!r}.")
 
 
-def compare_layers(original: Path, roundtrip: Path, count: int, cancel: Event) -> dict:
+def compare_layers(
+    original: Path, roundtrip: Path, count: int, cancel: Event, progress=lambda _: None
+) -> dict:
     changed = 0
     max_delta = 0
     with zipfile.ZipFile(original) as before, zipfile.ZipFile(roundtrip) as after:
@@ -206,7 +208,8 @@ def compare_layers(original: Path, roundtrip: Path, count: int, cancel: Event) -
             or len(set(right)) != count
         ):
             raise PipelineError("Layer archive counts or names do not match.")
-        for a, b in zip(left, right, strict=True):
+        for index, (a, b) in enumerate(zip(left, right, strict=True)):
+            progress(f"verify layer pixels {index + 1}/{count}")
             if cancel.is_set():
                 raise PipelineError("Job cancelled during layer verification.")
             arrays = []
@@ -266,7 +269,12 @@ def validate_metadata(values: dict, settings: Settings, count: int):
 
 
 def run_pipeline(
-    model: Path, directory: Path, settings: Settings, cancel=None, progress=lambda _: None
+    model: Path,
+    directory: Path,
+    settings: Settings,
+    cancel=None,
+    progress=lambda _: None,
+    center=None,
 ):
     settings.validate()
     model = model.resolve(strict=True)
@@ -329,6 +337,8 @@ def run_pipeline(
                 "--load",
                 ini,
                 "--export-sla",
+                "--center",
+                f"{center[0]},{center[1]}" if center is not None else "76.704,43.52",
                 "--output",
                 sl1,
                 directory / "model.stl",
@@ -376,7 +386,7 @@ def run_pipeline(
         roundtrip = directory / "readback.sl1"
         execute("readback", [uv, "convert", pending, "sl1", roundtrip, "--no-overwrite"])
         progress("verify-layer-pixels")
-        manifest["pixels"] = compare_layers(sl1, roundtrip, count, cancel)
+        manifest["pixels"] = compare_layers(sl1, roundtrip, count, cancel, progress)
         issues = execute(
             "issues",
             [

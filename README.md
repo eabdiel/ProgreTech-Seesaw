@@ -1,20 +1,21 @@
 # ProgreTech Seesaw
 
-A Python-driven, fully offline slicing workflow for Ubuntu. Start with the Anycubic
-Photon Mono 4, then qualify more resin printers and add FDM through backend adapters.
+A Python-driven, offline slicing workspace for Ubuntu. **Version 0.3.0** supports
+software-tested Anycubic Photon Mono 4 resin and Original Prusa i3 MK3S/MK3S+ filament
+workflows. Neither printer/material combination is physically qualified by this project.
 
-**Status: early Mono 4 calibration workflow; physical printing is not yet qualified.**
-Version **0.2.0** adds desktop project save/reopen, rotation and uniform scale with undo,
-explicit resin settings, automatic supports, cancellable slicing, decoded layer preview
-and checksum-verified PM4N export. Native file validation passes before export is offered.
+Choose a printer and compatible material profile, load an STL or the bundled test,
+move/rotate/resize it, duplicate and arrange copies, generate supports, slice, inspect
+actual layers and export a checksum-verified `.pm4n` or `.gcode` to your USB drive.
+Profiles and editable projects are local; resin exposure is intentionally unset until
+you supply settings for your exact material. See [the workspace guide](docs/WORKSPACE_0_3.md).
 
-The adapter requires **PrusaSlicer 2.9.4** and **UVTools core 7.0.1**, installed separately.
-It currently accepts one closed STL, automatically centers it, and limits jobs to 512
-layers with a conservative RAM check. Translation, multiple copies, automatic orientation,
-hollowing and drain-hole editing remain pending. Start with a small calibration piece,
-not an arbitrary large model. Exposure values are intentionally unset.
-See [desktop workflow and validation](docs/DESKTOP_WORKFLOW.md) and
-[backend validation](docs/BACKEND_VALIDATION.md).
+PrusaSlicer **2.9.4** is required; Mono 4 additionally requires UVTools core **7.0.1**.
+These engines are installed separately. The current workspace handles one source STL
+with up to 32 independently transformed instances. Resin jobs remain limited to 512
+layers and a conservative RAM admission check. Automatic orientation and hollow/drain
+editing are still under development. Start hardware testing with calibration geometry.
+See [backend validation](docs/BACKEND_VALIDATION.md).
 
 The intended production pipeline is:
 
@@ -83,7 +84,9 @@ exposure, temperature and motion settings are not yet qualified.
 ## License and upstream work
 
 Seesaw code is AGPL-3.0-only; see [LICENSE](LICENSE).
-The foundation does not bundle or copy upstream slicer implementation code.
+Prusa printer/PLA settings are bundled with attribution; slicer engines remain separate.
+The unchanged bundled ctrlV test model has its own CC BY-ND license; see its packaged
+`assets/test-model/ATTRIBUTION.txt`. The archive does not identify a license version.
 PrusaSlicer and UVTools use AGPL-3.0 license texts; mslicer uses GPL-3.0.
 See [third-party notices](docs/THIRD_PARTY.md) before distributing backend binaries.
 

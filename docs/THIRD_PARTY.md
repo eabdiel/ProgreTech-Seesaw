@@ -19,4 +19,11 @@ PySide6/Qt modules, PyVista, VTK, trimesh, NumPy and transitive dependencies. A 
 developer install is not a completed binary redistribution review.
 
 The owner's UI reference is used as design direction, not shipped as an application
-asset. No third-party printable model or AI weights are included in this repository.
+asset. The owner-authorized ctrlV test model is bundled unchanged under its supplied CC BY-ND
+license (version unspecified). Original README, LICENSE and attribution are packaged
+under `seesaw/assets/test-model/`. No AI weights are included.
+
+Flattened MK3S/Generic PLA configuration data comes from the installed PrusaResearch.ini
+config_version 2.4.0; provenance is retained in `seesaw/assets/PRUSA_PROFILES_NOTICE.txt`.
+The installed PrusaSlicer Debian copyright inventory identifies the source as AGPL-3.
+The application license does not relicense the separately attributed model asset.

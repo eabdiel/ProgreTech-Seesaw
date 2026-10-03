@@ -30,11 +30,14 @@ Exit: reproducible backend integration tests pass; output is a hardware-test can
 
 ## M2 — seamless offline desktop baseline
 
-Desktop progress in 0.2.0: project save/reopen, centered rotation/scale with undo, explicit
-settings, support generation, cancellable native slicing, decoded layer preview and
-verified calibration-candidate export are wired together. See `DESKTOP_WORKFLOW.md`.
-The full M2 feature set remains incomplete: translation/copies, automatic orientation,
-hollowing/drain-hole editing, broader platform trials and large-job profiling remain open.
+Desktop progress in 0.3.0: printer selection, technology-filtered local material
+profiles, XY placement, independent copies/arrangement, project migration, native
+supports, actual layer preview and verified export are integrated. The named ctrlV
+sample is bundled unchanged with attribution. The first FDM adapter (MK3S/PLA) is
+software-tested. See `WORKSPACE_0_3.md`.
+
+Remaining M2 work: automatic orientation, hollowing/drain-hole editing, broader
+Ubuntu/Wayland trials and large-job profiling. Physical qualification remains M3.
 
 - Editable transforms, undo, copies, supports/hollowing/holes and profile selection.
 - Project save/reopen, real sliced-layer preview, meaningful issue review and export.
@@ -43,7 +46,7 @@ hollowing/drain-hole editing, broader platform trials and large-job profiling re
 - Run from fresh local state with networking disabled and retain evidence.
 
 Exit: Edwin can select a local STL and obtain a validated PM4N entirely through Seesaw.
-This is the first “ready for you to test” milestone, not the current starter.
+The current workspace supports this test workflow; full M2 scope remains open.
 
 Post-release research demonstrated native hollowing and a corrected drain opening
 in offline layers. See `HOLLOWING_RESEARCH.md`; these features remain outside the
@@ -63,7 +66,7 @@ Exit: repeatable print evidence supports the Mono 4 compatibility label.
 
 - Benchmark mslicer and accept an optional adapter only if correctness and gains justify it.
 - Qualify additional resin printer profiles individually.
-- Add an FDM route through PrusaSlicer to G-code with separate setup/preview/validation.
+- First FDM route implemented in 0.3.0 for MK3S/PLA; expand only with per-profile evidence.
 - Publish a capability matrix with source-only, integration-tested and hardware-tested levels.
 
 ## M5 — local AI orchestration

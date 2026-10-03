@@ -10,7 +10,9 @@ import uuid
 from dataclasses import asdict, dataclass, fields, replace
 from pathlib import Path
 
+from seesaw.fdm_settings import FDMSettings
 from seesaw.pipeline import PipelineError, Settings
+from seesaw.profiles import MaterialProfile, printer_by_id
 
 MAX_MODEL_BYTES = 256 * 1024 * 1024
 MAX_PROJECT_BYTES = 64 * 1024
@@ -31,6 +33,9 @@ def exact_keys(value, names):
 
 def checked_settings(settings):
     if settings is None:
+        return
+    if type(settings) is FDMSettings:
+        settings.validate()
         return
     if type(settings) is not Settings:
         raise ValueError("Settings must be a Settings record or None.")
@@ -100,9 +105,12 @@ class Project:
     model_path: Path
     model_sha256: str
     transform: Transform = Transform()
-    settings: Settings | None = None
+    settings: Settings | FDMSettings | None = None
     revision: int = 1
     printer_id: str = "mono4"
+    copies: tuple[Transform, ...] = ()
+    material: MaterialProfile | None = None
+    printer_revision: int = 1
 
     def __post_init__(self):
         if not isinstance(self.model_path, Path) or not self.model_path.is_absolute():
@@ -117,8 +125,24 @@ class Project:
             raise ValueError("Invalid transform.")
         if type(self.revision) is not int or self.revision < 1:
             raise ValueError("Revision must be a positive integer.")
-        if self.printer_id != "mono4":
-            raise ValueError("Only the Mono 4 profile is supported.")
+        printer = printer_by_id(self.printer_id)
+        if self.printer_revision != printer.revision or type(self.printer_revision) is not int:
+            raise ValueError("Unsupported printer profile revision.")
+        if (
+            type(self.copies) is not tuple
+            or len(self.copies) > 31
+            or any(type(value) is not Transform for value in self.copies)
+        ):
+            raise ValueError("A project supports at most 32 model instances.")
+        if self.settings is not None and type(self.settings) is not (
+            Settings if printer.technology == "resin" else FDMSettings
+        ):
+            raise ValueError("Settings do not match the selected printer technology.")
+        if self.material is not None and (
+            type(self.material) is not MaterialProfile
+            or self.material.printer_id != self.printer_id
+        ):
+            raise ValueError("Material profile does not match the selected printer.")
         checked_settings(self.settings)
 
     def edited(self, **changes):
@@ -132,13 +156,16 @@ class Project:
 
     def to_dict(self):
         return {
-            "schema": "version1",
+            "schema": "version2",
             "model_path": str(self.model_path),
             "model_sha256": self.model_sha256,
             "transform": self.transform.to_dict(),
             "settings": asdict(self.settings) if self.settings is not None else None,
             "revision": self.revision,
             "printer_id": self.printer_id,
+            "copies": [value.to_dict() for value in self.copies],
+            "material": self.material.to_dict() if self.material else None,
+            "printer_revision": self.printer_revision,
         }
 
     def fingerprint(self):
@@ -155,6 +182,20 @@ class Project:
 
     @classmethod
     def from_dict(cls, data):
+        if type(data) is dict and data.get("schema") == "version1":
+            exact_keys(
+                data,
+                (
+                    "schema",
+                    "model_path",
+                    "model_sha256",
+                    "transform",
+                    "settings",
+                    "revision",
+                    "printer_id",
+                ),
+            )
+            data = dict(data, schema="version2", copies=[], material=None, printer_revision=1)
         exact_keys(
             data,
             (
@@ -165,16 +206,24 @@ class Project:
                 "settings",
                 "revision",
                 "printer_id",
+                "copies",
+                "material",
+                "printer_revision",
             ),
         )
-        if data["schema"] != "version1":
+        if data["schema"] != "version2":
             raise ValueError("Unsupported project schema.")
         if type(data["model_path"]) is not str:
             raise ValueError("Model path must be a string.")
         settings = data["settings"]
         if settings is not None:
-            exact_keys(settings, (f.name for f in fields(Settings)))
-            settings = Settings(**settings)
+            kind = (
+                Settings if printer_by_id(data["printer_id"]).technology == "resin" else FDMSettings
+            )
+            exact_keys(settings, (f.name for f in fields(kind)))
+            settings = kind(**settings)
+        if type(data["copies"]) is not list:
+            raise ValueError("Copies must be a list.")
         return cls(
             Path(data["model_path"]),
             data["model_sha256"],
@@ -182,6 +231,9 @@ class Project:
             settings,
             data["revision"],
             data["printer_id"],
+            tuple(Transform.from_dict(value) for value in data["copies"]),
+            MaterialProfile.from_dict(data["material"]) if data["material"] is not None else None,
+            data["printer_revision"],
         )
 
     @classmethod
