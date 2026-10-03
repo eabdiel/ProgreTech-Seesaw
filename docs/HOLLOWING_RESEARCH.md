@@ -59,3 +59,20 @@ corrected drain result, with script `backend-research/controller_raster_probe.py
 Each folder retains native logs, inputs/config and archives. The metadata transit
 probe was a reviewed Mak contribution. Codex wrote and checked the raster probe
 after rejecting the worker draft; no local-worker raster completion is claimed.
+
+## PM4N readback and cavity checks
+
+A subsequent network-disabled UVTools core 7.0.1 experiment encoded both hollow
+variants to PM4N, checked the Mono 4 metadata, decoded back to SL1 and compared all
+50 native layer rasters. Both had zero changed pixels. Resin-trap and suction-cup
+detection reported one ResinTrap for the closed hollow fixture (layers 10–39),
+and zero issues in that selected check set for the corrected bottom-drained
+fixture. This is software evidence for these fixtures, not physical qualification
+or a guarantee against every geometry/printing issue. Per-layer exposure/Z checks
+were not repeated in this research probe; metadata checks and exact raster
+comparison are the specific claims here.
+
+Evidence: `backend-research/hollow-readback-sny_x0jh/result.json`, native logs and
+readback archives under the same task root; controller script `hollow_roundtrip.py`.
+Research PM4N artifacts use synthetic exposures and are not offered as print-ready
+files or final deliverables. Installed application behavior is unchanged.
