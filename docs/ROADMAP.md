@@ -45,6 +45,10 @@ hollowing/drain-hole editing, broader platform trials and large-job profiling re
 Exit: Edwin can select a local STL and obtain a validated PM4N entirely through Seesaw.
 This is the first “ready for you to test” milestone, not the current starter.
 
+Post-release research demonstrated native hollowing and a corrected drain opening
+in offline layers. See `HOLLOWING_RESEARCH.md`; these features remain outside the
+0.2.0 UI pending further validation.
+
 ## M3 — physical Mono 4 qualification
 
 - Record firmware and exact Anycubic clear water-washable resin variant.
