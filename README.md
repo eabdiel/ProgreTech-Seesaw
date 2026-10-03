@@ -1,6 +1,6 @@
 # ProgreTech Seesaw
 
-A Python-driven, offline slicing workspace for Ubuntu. **Version 0.3.0** supports
+A Python-driven, offline slicing workspace for Ubuntu. **Version 0.3.1** supports
 software-tested Anycubic Photon Mono 4 resin and Original Prusa i3 MK3S/MK3S+ filament
 workflows. Neither printer/material combination is physically qualified by this project.
 
@@ -9,6 +9,8 @@ move/rotate/resize it, duplicate and arrange copies, generate supports, slice, i
 actual layers and export a checksum-verified `.pm4n` or `.gcode` to your USB drive.
 Profiles and editable projects are local; resin exposure is intentionally unset until
 you supply settings for your exact material. See [the workspace guide](docs/WORKSPACE_0_3.md).
+Version 0.3.1 adds zoomed layer findings and an explicit, strictly bounded native
+single-pixel repair option; see [repair validation](docs/LAYER_FINDINGS.md).
 
 PrusaSlicer **2.9.4** is required; Mono 4 additionally requires UVTools core **7.0.1**.
 These engines are installed separately. The current workspace handles one source STL

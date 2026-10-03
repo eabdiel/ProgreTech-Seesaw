@@ -1,5 +1,6 @@
 """Offline Mono 4 desktop preparation and software-validated calibration export."""
 
+import json
 import os
 import sys
 import uuid
@@ -11,6 +12,7 @@ from PySide6.QtGui import QDesktopServices, QPixmap
 from PySide6.QtWidgets import (
     QApplication,
     QCheckBox,
+    QComboBox,
     QDoubleSpinBox,
     QFileDialog,
     QFormLayout,
@@ -173,6 +175,10 @@ class Window(WorkspaceControls, QMainWindow):
         self.layer_image = QLabel("Slice to inspect decoded PM4N layers.")
         self.layer_image.setAlignment(Qt.AlignmentFlag.AlignCenter)
         preview_layout.addWidget(self.layer_image, 1)
+        self.finding_box = QComboBox()
+        self.finding_box.addItem("Full layer view", None)
+        self.finding_box.currentIndexChanged.connect(self.select_finding)
+        preview_layout.addWidget(self.finding_box)
         self.layer_info = QLabel("")
         preview_layout.addWidget(self.layer_info)
         self.layer_slider = QSlider(Qt.Orientation.Horizontal)
@@ -313,6 +319,10 @@ class Window(WorkspaceControls, QMainWindow):
         self.layer_preview = None
         self.preview_generation += 1
         self.layer_slider.setEnabled(False)
+        self.finding_box.blockSignals(True)
+        self.finding_box.clear()
+        self.finding_box.addItem("Full layer view", None)
+        self.finding_box.blockSignals(False)
         self.layer_image.clear()
         self.layer_info.setText("Slice to inspect decoded PM4N layers.")
         self.export.setEnabled(False)
@@ -331,6 +341,7 @@ class Window(WorkspaceControls, QMainWindow):
             self.exposure,
             self.bottom_exposure,
             self.supports,
+            self.pixel_repair,
             self.slice,
             self.printer_box,
             self.material_box,
@@ -412,6 +423,50 @@ class Window(WorkspaceControls, QMainWindow):
                 "Open job details and inspect pipeline/issues.log."
             )
         self.status.setText(f"No export available: {message}")
+        if "Layer issues found" in message:
+            self.inspect_failed_layers()
+
+    def inspect_failed_layers(self):
+        if self.job_directory is None:
+            return
+        directory = self.job_directory / "pipeline"
+        try:
+            manifest = json.loads((directory / "manifest.json").read_text())
+            count = manifest["layer_count"]
+            self.layer_preview = LayerPreview(directory / "readback.sl1", count)
+            from seesaw.issues import parse_islands
+
+            try:
+                findings = parse_islands((directory / "issues.log").read_text(), count)
+            except ValueError:
+                findings = []  # Unknown types remain blockers; full layers can still be inspected.
+            self.finding_box.blockSignals(True)
+            for finding in findings:
+                self.finding_box.addItem(
+                    f"Layer {finding.layer + 1}: island, {finding.pixels} pixel(s)", finding
+                )
+            self.finding_box.blockSignals(False)
+            self.layer_slider.setRange(0, count - 1)
+            self.layer_slider.setValue(0)
+            self.layer_slider.setEnabled(True)
+            self.tabs.setCurrentIndex(1)
+            self.request_layer()
+        except (OSError, ValueError, KeyError, TypeError, BadZipFile):
+            self.layer_preview = None
+            self.layer_slider.setEnabled(False)
+        self.export.setEnabled(False)
+
+    def select_finding(self):
+        if not isinstance(self.layer_preview, LayerPreview):
+            return
+        finding = self.finding_box.currentData()
+        self.preview_generation += 1
+        self.layer_preview = LayerPreview(
+            self.layer_preview.archive, len(self.layer_preview.names), focus=finding
+        )
+        if finding is not None:
+            self.layer_slider.setValue(finding.layer)
+        self.request_layer()
 
     def slice_complete(self, snapshot, directory, manifest):
         if (
@@ -442,6 +497,11 @@ class Window(WorkspaceControls, QMainWindow):
         self.status.setText(
             f"{manifest['layer_count']} layers validated. "
             "Review before exporting a calibration candidate."
+            + (
+                f" Removed {manifest['repair']['removed_pixels']} isolated pixel(s)."
+                if manifest.get("repair", {}).get("removed_pixels")
+                else ""
+            )
         )
 
     def request_layer(self):
@@ -491,7 +551,13 @@ class Window(WorkspaceControls, QMainWindow):
         else:
             text = f"Z {self.layer_preview.z_values[index]:.3f} mm • Actual extruded G-code paths"
         self.layer_info.setText(f"Layer {index + 1}/{len(self.layer_preview.names)} • {text}")
-        self.export.setEnabled(not self.export_active)
+        if self.candidate is None:
+            self.layer_info.setText(self.layer_info.text() + " • Inspection only; export blocked")
+        self.export.setEnabled(
+            self.candidate is not None
+            and self.gate.is_current(self.project)
+            and not self.export_active
+        )
 
     def export_print(self):
         if self.busy():

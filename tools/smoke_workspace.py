@@ -149,7 +149,19 @@ def tick():
 
 
 timer = QTimer()
-timer.timeout.connect(tick)
+
+
+def guarded_tick():
+    if state.get("in_tick"):
+        return
+    state["in_tick"] = True
+    try:
+        tick()
+    finally:
+        state["in_tick"] = False
+
+
+timer.timeout.connect(guarded_tick)
 timer.start(200)
 app.exec()
 (root / "result.json").write_text(json.dumps(state, indent=2))

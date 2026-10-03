@@ -2,9 +2,9 @@
 
 The Python core now stores a single local STL reference, SHA-256, immutable transform,
 explicit resin or filament settings, printer identity/revision and an immutable material
-profile snapshot in version-2 JSON. Up to 31 additional independently transformed
-copies share the source hash. Version-1 projects migrate on reading; reopening never
-restores export readiness. The 0.3.0 desktop uses this API throughout.
+profile snapshot in version-3 JSON. Up to 31 additional independently transformed
+copies share the source hash. Version-1/2 projects migrate on reading; reopening never
+restores export readiness. The 0.3.1 desktop uses this API throughout.
 
 `Project.from_stl_path(path, settings=...)` records source identity; geometry inspection
 still belongs to `model.load_stl`. `save_project` writes a unique temporary file, flushes
@@ -35,3 +35,6 @@ The desktop additionally requires the pipeline's readback and issue checks befor
 Validation includes settings round trips, malformed inputs, source tamper/missing
 checks, atomic-save failure, source overwrite prevention, fingerprints, stale job
 completion, invalidation and reopen without readiness. Desktop integration evidence and limitations are recorded in `DESKTOP_WORKFLOW.md`.
+
+Single-pixel repair is a boolean preparation choice in project schema version3. It is
+disabled on migration, rejected for FDM, and included in job currency. See LAYER_FINDINGS.md.

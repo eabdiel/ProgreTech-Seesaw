@@ -275,8 +275,11 @@ def run_pipeline(
     cancel=None,
     progress=lambda _: None,
     center=None,
+    repair_single_pixels=False,
 ):
     settings.validate()
+    if type(repair_single_pixels) is not bool:
+        raise PipelineError("Repair choice must be boolean.")
     model = model.resolve(strict=True)
     _, info = load_stl(model)
     if not info.watertight or not info.fits_unrotated:
@@ -350,6 +353,27 @@ def run_pipeline(
             count = len([n for n in archive.namelist() if re.fullmatch(r"[^/]+\d{5}\.png", n)])
         if not settings.bottom_layers < count <= 512:
             raise PipelineError("Job needs normal layers after bottom layers (max 512 total).")
+        manifest["layer_count"] = count
+        if repair_single_pixels:
+            from seesaw.issues import parse_islands, repair_properties, verify_repair
+
+            report = execute("repair-findings", [uv, "print-issues", sl1, "--islands"])
+            islands = parse_islands(report, count)
+            singletons = [i for i in islands if i.pixels == i.width == i.height == 1]
+            if len(singletons) > 64:
+                raise PipelineError("More than 64 singleton islands; change geometry or supports.")
+            manifest["repair"] = {"requested": True, "removed_pixels": 0}
+            if singletons:
+                repaired = directory / "repaired.sl1"
+                argv = [uv, "run", sl1, "OperationRepairLayers"]
+                for key, value in repair_properties().items():
+                    argv.extend(["-p", f"{key}={value}"])
+                argv.extend(["-o", repaired])
+                execute("repair-single-pixels", argv)
+                manifest["repair"].update(
+                    verify_repair(sl1, repaired, islands, count, cancel, progress)
+                )
+                sl1 = repaired
         execute("encode", [uv, "convert", sl1, "pm4n", pending, "--no-overwrite"])
         if not pending.is_file() or pending.stat().st_size < 100:
             raise PipelineError("UVTools did not produce a native file.")

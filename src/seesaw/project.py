@@ -111,6 +111,7 @@ class Project:
     copies: tuple[Transform, ...] = ()
     material: MaterialProfile | None = None
     printer_revision: int = 1
+    repair_single_pixels: bool = False
 
     def __post_init__(self):
         if not isinstance(self.model_path, Path) or not self.model_path.is_absolute():
@@ -143,6 +144,10 @@ class Project:
             or self.material.printer_id != self.printer_id
         ):
             raise ValueError("Material profile does not match the selected printer.")
+        if type(self.repair_single_pixels) is not bool:
+            raise ValueError("Repair choice must be boolean.")
+        if self.repair_single_pixels and printer.technology != "resin":
+            raise ValueError("Pixel repair is only available for resin printers.")
         checked_settings(self.settings)
 
     def edited(self, **changes):
@@ -156,7 +161,7 @@ class Project:
 
     def to_dict(self):
         return {
-            "schema": "version2",
+            "schema": "version3",
             "model_path": str(self.model_path),
             "model_sha256": self.model_sha256,
             "transform": self.transform.to_dict(),
@@ -166,6 +171,7 @@ class Project:
             "copies": [value.to_dict() for value in self.copies],
             "material": self.material.to_dict() if self.material else None,
             "printer_revision": self.printer_revision,
+            "repair_single_pixels": self.repair_single_pixels,
         }
 
     def fingerprint(self):
@@ -196,6 +202,23 @@ class Project:
                 ),
             )
             data = dict(data, schema="version2", copies=[], material=None, printer_revision=1)
+        if type(data) is dict and data.get("schema") == "version2":
+            exact_keys(
+                data,
+                (
+                    "schema",
+                    "model_path",
+                    "model_sha256",
+                    "transform",
+                    "settings",
+                    "revision",
+                    "printer_id",
+                    "copies",
+                    "material",
+                    "printer_revision",
+                ),
+            )
+            data = dict(data, schema="version3", repair_single_pixels=False)
         exact_keys(
             data,
             (
@@ -209,9 +232,10 @@ class Project:
                 "copies",
                 "material",
                 "printer_revision",
+                "repair_single_pixels",
             ),
         )
-        if data["schema"] != "version2":
+        if data["schema"] != "version3":
             raise ValueError("Unsupported project schema.")
         if type(data["model_path"]) is not str:
             raise ValueError("Model path must be a string.")
@@ -234,6 +258,7 @@ class Project:
             tuple(Transform.from_dict(value) for value in data["copies"]),
             MaterialProfile.from_dict(data["material"]) if data["material"] is not None else None,
             data["printer_revision"],
+            data["repair_single_pixels"],
         )
 
     @classmethod

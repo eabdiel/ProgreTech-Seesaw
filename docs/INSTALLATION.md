@@ -1,6 +1,6 @@
 # Ubuntu installer and updates
 
-Release **0.3.0** provides printer and material selection, saved material profiles,
+Release **0.3.1** provides printer and material selection, saved material profiles,
 model placement/copies, supports, sliced-layer preview and verified PM4N/G-code export.
 See `WORKSPACE_0_3.md`. Firmware and material settings remain physically unqualified.
 
@@ -11,12 +11,12 @@ installation before slicing; this release is not a complete air-gapped engine bu
 
 ## Install and launch
 
-Download `progretech-seesaw_0.3.0_amd64.deb` from the project's
+Download `progretech-seesaw_0.3.1_amd64.deb` from the project's
 [GitHub releases](https://github.com/eabdiel/ProgreTech-Seesaw/releases).
 Open it with Ubuntu's package installer, or run:
 
 ```bash
-sudo apt install ./progretech-seesaw_0.3.0_amd64.deb
+sudo apt install ./progretech-seesaw_0.3.1_amd64.deb
 ```
 
 Find **ProgreTech Seesaw** in the Ubuntu application launcher. The terminal command

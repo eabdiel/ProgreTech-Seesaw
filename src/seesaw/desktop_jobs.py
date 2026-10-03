@@ -52,6 +52,7 @@ class SliceWorker(QThread):
                     self.cancel,
                     self.progress.emit,
                     center=center,
+                    repair_single_pixels=project.repair_single_pixels,
                 )
             else:
                 from seesaw.fdm import run_fdm

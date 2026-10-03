@@ -1,4 +1,4 @@
-# Seesaw 0.3 workspace
+# Seesaw 0.3.1 workspace
 
 ## Use
 
@@ -48,6 +48,13 @@ are editable. The first and ordinary layer temperatures use the selected values.
 This initial material adapter is PLA-based; renaming a profile does not turn it into a
 qualified ABS/PETG printer configuration. Additional printer definitions need a matching
 adapter and tests; arbitrary unverified printer imports are intentionally unavailable.
+
+## Layer findings
+
+Failed island checks now offer a zoomed Layers finding selector while export remains
+blocked. **Remove isolated single pixels** is off by default and permits a bounded
+native repair with exact change verification. It cannot fix large unsupported regions.
+See [the repair contract and evidence](LAYER_FINDINGS.md).
 
 ## Current limits
 

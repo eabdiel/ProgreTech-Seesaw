@@ -7,6 +7,7 @@ from pathlib import Path
 import numpy as np
 import pyvista as pv
 from PySide6.QtWidgets import (
+    QCheckBox,
     QComboBox,
     QDoubleSpinBox,
     QFileDialog,
@@ -55,6 +56,10 @@ class WorkspaceControls:
                 "Derivatives, "
                 "unchanged. It is a demanding geometry test, not a resin exposure calibration. "
                 "The author and original notice are included with the application.\n\n"
+                "If a resin job finds islands, Layers can zoom to each finding while export "
+                "stays blocked. Remove isolated single pixels is an optional, bounded UVTools "
+                "repair; it cannot fix large unsupported regions. "
+                "Slice again after changing it.\n\n"
                 "Profiles and jobs stay local. Follow your material manufacturer's handling "
                 "and cleanup "
                 "instructions. Water-washable resin waste does not belong down a drain."
@@ -111,6 +116,13 @@ class WorkspaceControls:
             self.filament_controls[key] = spin
             form.addRow(label, spin)
         right.insertWidget(5, self.filament_panel)
+        self.pixel_repair = QCheckBox("Remove isolated single pixels")
+        self.pixel_repair.setToolTip(
+            "Opt-in UVTools repair: removes at most 64 reported one-pixel islands. "
+            "Every changed pixel is checked; larger islands still block export."
+        )
+        self.pixel_repair.toggled.connect(self.repair_changed)
+        right.insertWidget(6, self.pixel_repair)
         self.test_button = QPushButton("Load test file")
         self.test_button.clicked.connect(self.load_test_file)
         left.insertWidget(2, self.test_button)
@@ -144,6 +156,12 @@ class WorkspaceControls:
         self.update_technology()
         if profile_errors:
             self.status.setText("Some local profiles were rejected: " + "; ".join(profile_errors))
+
+    def repair_changed(self):
+        if self.project is None or self.syncing:
+            return
+        self.project = self.project.edited(repair_single_pixels=self.pixel_repair.isChecked())
+        self.invalidate_result()
 
     def selected_printer(self):
         return printer_by_id(self.printer_box.currentData())
@@ -179,6 +197,7 @@ class WorkspaceControls:
         )
         from seesaw import __version__
 
+        self.pixel_repair.setVisible(printer.technology == "resin")
         self.setWindowTitle(f"ProgreTech Seesaw {__version__} — {printer.name}")
 
     def printer_changed(self):
@@ -202,6 +221,9 @@ class WorkspaceControls:
                 printer_revision=self.selected_printer().revision,
                 material=material,
                 settings=settings_for(material),
+                repair_single_pixels=(
+                    self.project.repair_single_pixels if material.technology == "resin" else False
+                ),
             )
             self.invalidate_result()
             self.sync_controls()
@@ -258,6 +280,7 @@ class WorkspaceControls:
                 for key, spin in self.filament_controls.items():
                     spin.setValue(getattr(settings or FDMSettings(), key))
             self.supports.setChecked(settings.supports if settings else False)
+            self.pixel_repair.setChecked(self.project.repair_single_pixels)
             self.update_technology()
             self.update_settings_summary()
         finally:

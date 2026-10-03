@@ -5,14 +5,15 @@ import re
 import zipfile
 from pathlib import Path
 
-from PIL import Image
+from PIL import Image, ImageDraw
 
 from seesaw.model import MONO4
 
 
 class LayerPreview:
-    def __init__(self, archive: Path, expected_count: int):
+    def __init__(self, archive: Path, expected_count: int, focus=None):
         self.archive = Path(archive)
+        self.focus = focus
         with zipfile.ZipFile(self.archive) as source:
             if len(source.infolist()) > 1024:
                 raise ValueError("Too many archive entries.")
@@ -38,7 +39,32 @@ class LayerPreview:
             with source.open(entry) as stream, Image.open(stream) as picture:
                 if picture.size != MONO4.resolution_px:
                     raise ValueError("Unexpected layer raster dimensions.")
+                picture = picture.convert("L")
+                if self.focus is not None and self.focus.layer == index:
+                    f = self.focus
+                    left, top = max(0, f.x - 64), max(0, f.y - 64)
+                    right, bottom = min(9024, f.x + f.width + 64), min(5120, f.y + f.height + 64)
+                    picture = picture.crop((left, top, right, bottom)).convert("RGB")
+                    draw = ImageDraw.Draw(picture)
+                    draw.rectangle(
+                        (
+                            f.x - left - 2,
+                            f.y - top - 2,
+                            f.x - left + f.width + 1,
+                            f.y - top + f.height + 1,
+                        ),
+                        outline="#ef5350",
+                        width=1,
+                    )
+                    scale = min(900 / picture.width, 512 / picture.height)
+                    picture = picture.resize(
+                        (
+                            max(1, round(picture.width * scale)),
+                            max(1, round(picture.height * scale)),
+                        ),
+                        Image.Resampling.NEAREST,
+                    )
                 picture.thumbnail((900, 512))
                 result = io.BytesIO()
-                picture.convert("L").save(result, format="PNG")
+                picture.save(result, format="PNG")
                 return result.getvalue()
