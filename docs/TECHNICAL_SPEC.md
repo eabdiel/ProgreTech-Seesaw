@@ -3,8 +3,8 @@
 Version 0.1 • 2026-10-02 • Owner: Edwin / ProgreTech • Prepared by Codex
 
 This is the initial engineering specification. “Must” describes release requirements,
-not features already implemented. The current implementation is a read-only desktop
-and Python core foundation. Implementation status is tracked in `ROADMAP.md`.
+not features already implemented. The initial implementation was a read-only desktop and Python core foundation.
+Current implementation status is tracked in `ROADMAP.md` and `DESKTOP_WORKFLOW.md`.
 
 ## 1. Purpose and scope
 

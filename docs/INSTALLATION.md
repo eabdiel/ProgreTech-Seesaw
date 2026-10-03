@@ -1,20 +1,23 @@
 # Ubuntu installer and updates
 
-The first installer release is **0.1.0, foundation preview**. It imports and displays
-STL files; it does not yet slice or export printer files.
+Release **0.2.0** provides the early Mono 4 desktop calibration workflow: project
+save/reopen, rotation/scale, explicit resin settings, supports, slicing, decoded layer
+preview and verified PM4N export. Firmware and resin remain physically unqualified.
+See `DESKTOP_WORKFLOW.md` for the exact limits and `BACKEND_VALIDATION.md` for engine evidence.
 
-**0.1.1** retains that desktop scope and adds experimental backend validation through
-`progretech-seesaw-cli`. Use the corresponding `0.1.1` filename for the latest installer.
-The real backend integration evidence and command are in `BACKEND_VALIDATION.md`.
+PrusaSlicer **2.9.4** and UVTools core **7.0.1** must already be installed. The application
+reports missing/mismatched engines; it does not download them during offline use. The
+reference workstation has these engines installed. Other machines need a separate engine
+installation before slicing; this release is not a complete air-gapped engine bundle.
 
 ## Install and launch
 
-Download `progretech-seesaw_0.1.0_amd64.deb` from the project's
+Download `progretech-seesaw_0.2.0_amd64.deb` from the project's
 [GitHub releases](https://github.com/eabdiel/ProgreTech-Seesaw/releases).
 Open it with Ubuntu's package installer, or run:
 
 ```bash
-sudo apt install ./progretech-seesaw_0.1.0_amd64.deb
+sudo apt install ./progretech-seesaw_0.2.0_amd64.deb
 ```
 
 Find **ProgreTech Seesaw** in the Ubuntu application launcher. The terminal command

@@ -3,15 +3,18 @@
 A Python-driven, fully offline slicing workflow for Ubuntu. Start with the Anycubic
 Photon Mono 4, then qualify more resin printers and add FDM through backend adapters.
 
-**Status: project foundation, not a print-ready slicer.** The desktop can import and
-display STL geometry and report dimensions, watertightness and unrotated fit. It cannot
-yet prepare supports, slice or export printer files. Nothing in this release should
-be treated as a validated Mono 4 print job.
+**Status: early Mono 4 calibration workflow; physical printing is not yet qualified.**
+Version **0.2.0** adds desktop project save/reopen, rotation and uniform scale with undo,
+explicit resin settings, automatic supports, cancellable slicing, decoded layer preview
+and checksum-verified PM4N export. Native file validation passes before export is offered.
 
-Release **0.1.1** adds an experimental CLI backend-validation path. Actual PrusaSlicer
-2.9.4 and UVTools 7.0.1 produced and verified Mono 4 research candidates offline,
-including a supported 104-layer fixture. This is separate from the read-only desktop;
-see [backend validation and its limits](docs/BACKEND_VALIDATION.md).
+The adapter requires **PrusaSlicer 2.9.4** and **UVTools core 7.0.1**, installed separately.
+It currently accepts one closed STL, automatically centers it, and limits jobs to 512
+layers with a conservative RAM check. Translation, multiple copies, automatic orientation,
+hollowing and drain-hole editing remain pending. Start with a small calibration piece,
+not an arbitrary large model. Exposure values are intentionally unset.
+See [desktop workflow and validation](docs/DESKTOP_WORKFLOW.md) and
+[backend validation](docs/BACKEND_VALIDATION.md).
 
 The intended production pipeline is:
 
@@ -23,7 +26,7 @@ STL → PrusaSlicer (geometry, supports, layer rasterization)
 
 UVTools' documented PrusaSlicer integration consumes **sliced SL1 archives**, not an
 STL-to-printer workflow. The reviewed UVTools v7.0.1 source includes `.pm4n` support.
-The proposed backend pairing still needs integration and physical-printer testing.
+The backend pairing has software integration evidence; physical-printer testing remains open.
 See the [technical specification](docs/TECHNICAL_SPEC.md),
 [backend evidence](docs/BACKEND_REVIEW.md) and [milestones](docs/ROADMAP.md).
 
@@ -33,11 +36,11 @@ For the Ubuntu launcher installation, use the `.deb` from
 [GitHub Releases](https://github.com/eabdiel/ProgreTech-Seesaw/releases).
 See [installation and manual self-updates](docs/INSTALLATION.md).
 The desktop's **Check for updates** button checks published releases only when clicked.
-This first installer remains a foundation preview, not a printer-ready slicer.
+The installer includes the Python desktop runtime. Native slicer engines are separate prerequisites.
 
 Python 3.12 is the reference interpreter. Core dependencies are locked in `uv.lock`;
 the desktop uses PySide6 and PyVista/VTK. Setup downloads dependencies; application
-operation is intended to remain offline. An air-gapped installer is a later milestone.
+operation has been tested with networking disabled. A complete air-gapped engine/dependency bundle is a later milestone.
 
 ```bash
 uv sync --python 3.12 --extra desktop --extra dev --locked

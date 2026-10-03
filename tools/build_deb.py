@@ -151,9 +151,10 @@ Maintainer: ProgreTech Seesaw <eabdiel@users.noreply.github.com>
 Installed-Size: {size}
 Depends: {deps}
 Homepage: https://github.com/eabdiel/ProgreTech-Seesaw
-Description: Offline 3D model workflow for Ubuntu (foundation preview)
- Python desktop with STL viewing and explicit GitHub release updates.
- Desktop printer export is disabled. Backend CLI validation is experimental.
+Description: Offline resin slicing workflow for Ubuntu
+ Python desktop with preparation, layer preview and explicit GitHub release updates.
+ Mono 4 calibration export requires PrusaSlicer 2.9.4 and UVTools 7.0.1.
+ Firmware and resin settings remain physically unqualified.
 """,
     )
     # No maintainer scripts and no network operations during installation.

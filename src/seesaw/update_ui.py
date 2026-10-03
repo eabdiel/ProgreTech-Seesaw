@@ -80,11 +80,14 @@ class UpdateButton(QPushButton):
     def check(self):
         if self.busy():
             return
-        if self.window.worker is not None and self.window.worker.isRunning():
-            self.window.status.setText("Finish importing the model before checking for updates.")
+        if self.window.busy() or (
+            self.window.preview_worker is not None and self.window.preview_worker.isRunning()
+        ):
+            self.window.status.setText("Finish the current job before checking for updates.")
             return
         self.setEnabled(False)
-        self.window.add.setEnabled(False)
+        self.window.job_controls(False)
+        self.window.cancel.setEnabled(False)
         self.window.status.setText("Checking published GitHub releases…")
         self.worker = UpdateWorker(self)
         self.worker.checked.connect(self.on_checked)
@@ -121,7 +124,8 @@ class UpdateButton(QPushButton):
         # and finish it before replacing the reference with the install worker.
         self.worker.wait()
         self.setEnabled(False)
-        self.window.add.setEnabled(False)
+        self.window.job_controls(False)
+        self.window.cancel.setEnabled(False)
         self.worker = UpdateWorker(self, release)
         self.worker.status.connect(self.window.status.setText)
         self.worker.failed.connect(self.on_failed)
@@ -133,7 +137,7 @@ class UpdateButton(QPushButton):
     def enable_after(self, worker):
         if self.worker is worker:
             self.setEnabled(True)
-            self.window.add.setEnabled(True)
+            self.window.job_controls(True)
 
     def on_failed(self, message):
         self.window.status.setText(message)
