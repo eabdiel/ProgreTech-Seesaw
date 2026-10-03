@@ -30,6 +30,10 @@ Exit: reproducible backend integration tests pass; output is a hardware-test can
 
 ## M2 — seamless offline desktop baseline
 
+Core progress: versioned project save/reopen and stale-job input tracking are implemented
+and tested; see `PROJECT_STATE.md`. Desktop wiring, transforms applied to geometry,
+layer preview and export are still pending.
+
 - Editable transforms, undo, copies, supports/hollowing/holes and profile selection.
 - Project save/reopen, real sliced-layer preview, meaningful issue review and export.
 - Responsive workers, stale-result rejection and recoverable failure paths.
